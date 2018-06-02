@@ -1,12 +1,10 @@
 #! python3
-
 #Author: Elena Padgett, (c) 2018
 
-import openpyxl, os, pprint, csv, requests
+import openpyxl, os, csv, requests
 from openpyxl.styles import Font
 
-
-#1.a Open and read excel worksheet (.xlsx)
+#1.a. Open and read excel worksheet (.xlsx)
 
 os.chdir('C:\\fakepath\\Python Programs')   
 print (os.getcwd())             #file should be in the current working directory
@@ -21,7 +19,6 @@ def quantity(shares):
     if type(shares) != int:
         raise Exception('Quantity field can only contain digits.')
 
-
 for i in range (2, sheet.max_row + 1):
     shares_value = sheet['F' + str(i)].value
     try:
@@ -31,7 +28,6 @@ for i in range (2, sheet.max_row + 1):
 
 wb.save('Data_copy.xlsx')
 print('Done checking for exceptions.')
-
 
 #2. Calculate transaction total in local currency (Quantity * Price Local), write the output in Total Amount Local column.
 
@@ -48,7 +44,6 @@ sheet['I12'].font = boldTotal
 wb.save('Data_copy.xlsx')
 print('Done calculating Total Amount in local currency.')
 
-
 #3.a. Look up conversion rates using API call.
 
 url = 'http://data.fixer.io/api/latest?access_key=xxxxxxxxxxxxxxx'   #add your own API key
@@ -62,7 +57,6 @@ print("Base currency: " + response_dict['base'])
 currency = response_dict['rates']   
 print("Currencies:", len(currency))
 
-
 for i in range(2, 12):
     curr = sheet['G' + str(i)].value
     convRate = currency[curr]
@@ -71,9 +65,7 @@ for i in range(2, 12):
 wb.save('Data_copy.xlsx')
 print('Done looking up rates.')
 
-
 #3.b. Calculate Total Amount in EUR.
-
 for i in range (2, 12): 
     totalAmountLocal = sheet['I' + str(i)].value
     convRate = sheet['J' + str(i)].value
@@ -86,7 +78,6 @@ sheet['K12'].font = boldTotal
 
 wb.save('Data_copy.xlsx')
 print('Done calculating Total Amount in EUR.')
-
 
 #4. Calculate Commission based on account number and Broker keep.
 
@@ -112,7 +103,6 @@ sheet['M12'].font = boldTotal
 wb.save('Data_copy.xlsx')
 print('Done calculating commission.')
 
-
 #5. Create a csv file with how many transactions were executed on this date and how much commission earned.
 
 totalCommission = sheet['M12'].value 
@@ -124,6 +114,3 @@ outputWriter.writerow(['Total Commission is $' + totalCommission])
 outputFile.close()
 
 print('Done creating an output file Data_copy.xlsx and SummaryFile.csv.')
-
-
-
