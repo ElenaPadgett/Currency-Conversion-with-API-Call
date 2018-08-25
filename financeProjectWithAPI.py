@@ -4,11 +4,10 @@
 import openpyxl, os, csv, requests
 from openpyxl.styles import Font
 
-#1.a. Open and read excel worksheet (.xlsx)
+#1.a. Open and read excel worksheet from the current working directory
 
 os.chdir('C:\\fakepath\\Python Programs')   
-print (os.getcwd())             #file should be in the current working directory
-
+print (os.getcwd())              
 print ('Opening workbook Data.xlsx')
 wb = openpyxl.load_workbook('Data.xlsx')
 sheet = wb['Sample Data']
@@ -29,7 +28,7 @@ for i in range (2, sheet.max_row + 1):
 wb.save('Data_copy.xlsx')
 print('Done checking for exceptions.')
 
-#2. Calculate transaction total in local currency (Quantity * Price Local), write the output in Total Amount Local column.
+#2. Calculate transaction total in local currency (Quantity * Price Local)
 
 for i in range (2, sheet.max_row + 1):
     quantity = sheet['F' + str(i)].value
@@ -37,27 +36,23 @@ for i in range (2, sheet.max_row + 1):
     totalAmount = str(quantity * priceLocal)
     sheet ['I' + str(i)] = int(totalAmount)
 
-sheet['I12'] = '=SUM(I2:I11)'
-boldTotal = Font(bold=True)
-sheet['I12'].font = boldTotal
-
 wb.save('Data_copy.xlsx')
 print('Done calculating Total Amount in local currency.')
 
 #3.a. Look up conversion rates using API call.
 
-url = 'http://data.fixer.io/api/latest?access_key=xxxxxxxxxxxxxxx'   #add your own API key
-r = requests.get(url)             #use requests module and .get call to make the call
+url = 'http://data.fixer.io/api/latest?access_key=xxxxxxxxxxxxxxx'  
+r = requests.get(url)            
 print("Status code on API call:", r.status_code)
 
 response_dict = r.json()
-#print(response_dict.keys())
+print(response_dict.keys())
 print("Base currency: " + response_dict['base'])
 
 currency = response_dict['rates']   
 print("Currencies:", len(currency))
 
-for i in range(2, 12):
+for i in range(2, sheet.max_row + 1):
     curr = sheet['G' + str(i)].value
     convRate = currency[curr]
     sheet ['J' + str(i)] = convRate
@@ -66,33 +61,29 @@ wb.save('Data_copy.xlsx')
 print('Done looking up rates.')
 
 #3.b. Calculate Total Amount in EUR.
-for i in range (2, 12): 
+for i in range (2, sheet.max_row + 1): 
     totalAmountLocal = sheet['I' + str(i)].value
     convRate = sheet['J' + str(i)].value
     totalAmountEur = int(totalAmountLocal / convRate)
     sheet['K' + str(i)] = totalAmountEur
 
-sheet['K12'] = '=SUM(K2:K11)'
-boldTotal = Font(bold=True)
-sheet['K12'].font = boldTotal
-
 wb.save('Data_copy.xlsx')
 print('Done calculating Total Amount in EUR.')
 
-#4. Calculate Commission based on account number and Broker keep.
+#4. Calculate Commission based on the Account number in Column A and Broker keep in basis points.
 
-Broker_keep = {'IBM': 1, 'MCRSF': 2}
+Broker_keep = {'IBM': 12, 'MCRSF': 14}
 
-for rowNum in range(2, 12):
+for rowNum in range(2, sheet.max_row + 1):
     accountName = sheet ['A' + str(rowNum)].value
     broker_keep = Broker_keep[accountName]
     sheet ['L' + str(rowNum)] = broker_keep 
 
 wb.save('Data_copy.xlsx')
     
-for i in range (2, 12):
+for i in range (2, sheet.max_row + 1):
     totalAmount = sheet ['K' + str(i)].value
-    real_broker_keep = sheet ['L' + str(i)].value * 0.01
+    real_broker_keep = sheet ['L' + str(i)].value * 0.0001
     commission = totalAmount * real_broker_keep
     sheet ['M' + str(i)] = int(commission)
 
@@ -105,7 +96,7 @@ print('Done calculating commission.')
 
 #5. Create a csv file with how many transactions were executed on this date and how much commission earned.
 
-totalCommission = sheet['M12'].value 
+totalCommission = sheet['M' + str(sheet.max_row)].value 
 
 outputFile = open('SummaryFile.csv', 'w', newline='')
 outputWriter = csv.writer(outputFile)
